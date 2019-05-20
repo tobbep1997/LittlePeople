@@ -25,7 +25,7 @@ public class World : MonoBehaviour
     float baseSpeed = 1, baseSense = 1, baseSize = 1, baseAggresivness = 1;
 
     [SerializeField]
-    [Range(0.0f, 1.0f)]
+    [Range(0.0f, 10.0f)]
     float deviation = 0.1f;
 
     [SerializeField]
@@ -34,6 +34,7 @@ public class World : MonoBehaviour
     [SerializeField]
     float DayTime = 30.0f;
     float dayTimer = 0;
+    float homeTimer = 0;
 
     [SerializeField]
     public List<People> peoples;
@@ -44,6 +45,7 @@ public class World : MonoBehaviour
 
     public Slider TimeScaleSlider;
     public Slider FoodSlider;
+    public Slider Deviation;
 
     public bool IsDay
     {
@@ -52,6 +54,7 @@ public class World : MonoBehaviour
 
     public uint CurrentDay = 0;
     public uint DeathCount = 0;
+    public uint NomCount = 0;
 
     private void Start()
     {
@@ -67,6 +70,7 @@ public class World : MonoBehaviour
 
         TimeScale = this.TimeScaleSlider.value * 9 + 1;
         FoodSize = (uint)(this.FoodSlider.value * MaxFood + 1);
+        deviation = Deviation.value * 9 + 1;
 
         if (dayTimer >= DayTime)
         {
@@ -76,13 +80,19 @@ public class World : MonoBehaviour
                 allHome = peoples[i].IsHome();
             }
 
-            if (allHome)
+            homeTimer += Time.deltaTime;
+
+            if (allHome || homeTimer > 5.0f)
             {
                 SpawnFood();
                 CurrentDay++;
                 dayTimer = 0;
+                homeTimer = 0;
             }
         }
+
+        if (peoples.Count <= 0)
+            SpawnOnePeople(baseSpeed, baseSense, baseSize, baseAggresivness);
 
         if (spawnFood)
         {
@@ -147,6 +157,12 @@ public class World : MonoBehaviour
         peoples.Remove(p);
         Destroy(p.gameObject);
         DeathCount++;
+    }
+    public void Eat(People p)
+    {
+        peoples.Remove(p);
+        Destroy(p.gameObject);
+        NomCount++;
     }
 
     void SpawnFood()

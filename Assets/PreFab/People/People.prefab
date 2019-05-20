@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 3362989006263679606}
   m_Layer: 0
   m_Name: People
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -130,7 +130,7 @@ MonoBehaviour:
   Speed: 1
   SenseDistance: 1
   Size: 1
-  Aggresivness: 1
-  Energy: 100
+  Aggresivness: 0.01
+  Energy: 50
   reproduceCost: 200
   world: {fileID: 0}

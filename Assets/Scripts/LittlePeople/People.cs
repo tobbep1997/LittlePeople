@@ -37,21 +37,36 @@ public class People : MonoBehaviour
 
     Vector3 homePosition;
 
+    Material material;
+
+    bool HasMoved = false;
+    int kids = 0;
+
     private void Start()
     {
         this.agent = this.gameObject.GetComponent<NavMeshAgent>();
         homePosition = this.transform.position;
+        material = this.gameObject.GetComponent<MeshRenderer>().material;
     }
 
     private void Update()
     {
         if (world.IsDay)
+        {
             Move();
+            kids = 1;
+            HasMoved = true;
+        }
         else
             GoHome();
 
         if (this.Energy <= 0.0f)
             world.Destroy(this);
+
+
+
+        material.color = new Color(Aggresivness / 10.0f, Speed / 10.0f, SenseDistance / 10.0f);
+        transform.localScale = new Vector3(Size, Size, Size);
     }
 
     private void GoHome()
@@ -66,10 +81,11 @@ public class People : MonoBehaviour
 
         if (this.agent.remainingDistance > 1)
             return;
-        if (this.Energy > reproduceCost)
+        if (this.Energy > reproduceCost * kids && HasMoved)
         {
             world.SpawnOnePeople(Speed, SenseDistance, Size, Aggresivness);
-            this.Energy -= reproduceCost;
+            this.Energy -= reproduceCost * kids;
+            kids++;
         }
         
 
@@ -115,7 +131,18 @@ public class People : MonoBehaviour
 
     void Eat()
     {
-        if (world.Eat(FoodTarget))
+        if (FoodTarget.tag == "Player")
+        {
+            //People p = FoodTarget.GetComponent<People>();
+
+            if (FoodTarget.transform.localScale.x * 1.2f < Size)
+            {                
+                world.Eat(FoodTarget.GetComponent<People>());
+                Energy += 10000;
+               
+            }
+        }
+        else if (world.Eat(FoodTarget))
         {
             Energy += 100;
         }
@@ -128,6 +155,7 @@ public class People : MonoBehaviour
         if (distance < SenseDistance / 3.0f)
             distance = SenseDistance / 3.0f;
         Vector3 targetPosition = transform.position + new Vector3(Mathf.Cos(x) * distance, 0, Mathf.Sin(z) * distance);
+        targetPosition.y = 1;
         return targetPosition;
     }
     GameObject FindTarget()
@@ -135,29 +163,63 @@ public class People : MonoBehaviour
         float distance = float.MaxValue;
         int index = -1;
 
-        for (int i = 0; i < world.foods.Count; i++)
+        bool aggro = Random.value * 10.0f < this.Aggresivness;
+        //aggro = false;
+
+        float senseDist = SenseDistance - (Aggresivness * .5f) > 1.0f ? SenseDistance - (Aggresivness * .5f) : 1.0f;
+        if (aggro)
         {
-            Vector2 foodPos = new Vector2(world.foods[i].transform.position.x, world.foods[i].transform.position.z);
-            Vector2 peoplePos = new Vector2(transform.position.x, transform.position.z);
-            float dist;
-            if ((dist = Vector2.Distance(foodPos, peoplePos)) < SenseDistance)
+            for (int i = 0; i < world.peoples.Count; i++)
             {
-                if (dist < distance)
+                Vector2 targetPos = new Vector2(world.peoples[i].transform.position.x, world.peoples[i].transform.position.z);
+                Vector2 peoplePos = new Vector2(transform.position.x, transform.position.z);
+                float dist;
+                if ((dist = Vector2.Distance(targetPos, peoplePos)) < senseDist)
                 {
-                    distance = dist;
-                    index = i;
+                    if (dist < distance)
+                    {
+                        distance = dist;
+                        index = i;
+                    }
+                }
+            }
+        }
+        if (index < 0 || !aggro || world.peoples[index].Size * 1.2f >= Size)
+        {
+            aggro = false;
+            distance = float.MaxValue;
+            index = -1;
+            for (int i = 0; i < world.foods.Count; i++)
+            {
+                Vector2 foodPos = new Vector2(world.foods[i].transform.position.x, world.foods[i].transform.position.z);
+                Vector2 peoplePos = new Vector2(transform.position.x, transform.position.z);
+                float dist;
+                if ((dist = Vector2.Distance(foodPos, peoplePos)) < senseDist)
+                {
+                    if (dist < distance)
+                    {
+                        distance = dist;
+                        index = i;
+                    }
                 }
             }
         }
 
+
+
         if (index > 0)
-            return world.foods[index];
+        {
+            if (aggro)
+                return world.peoples[index].gameObject;
+            else
+                return world.foods[index];
+        }
         else
             return null;
     }
     float CalcMovementCost()
     {
-        return Mathf.Pow(Size, 3.0f) * Mathf.Pow(Speed, 2.0f) + SenseDistance;
+        return Mathf.Pow(Size, 2.2f) * Mathf.Pow(Speed, 1.2f) + SenseDistance - (Aggresivness * 0.1f);
     }
 
     public void SetAttributes(float speed, float sense, float size, float aggresiveness)
@@ -172,11 +234,21 @@ public class People : MonoBehaviour
         else
             this.SenseDistance = 1;
 
-        if (size > 0)
+        if (size > 0.5f)
             this.Size = size;
         else
-            this.Size = 0;
+            this.Size = 0.5f;
 
-        this.Aggresivness = aggresiveness;
+        this.Energy = this.Size * Energy;
+        if (this.Energy > this.reproduceCost)
+            this.Energy = this.reproduceCost - 1;
+
+        if (aggresiveness > 0)
+            this.Aggresivness = aggresiveness;
+        else
+            this.Aggresivness = 0;
+
+        //if (Aggresivness > 10)
+        //    Aggresivness = 10;
     }
 }

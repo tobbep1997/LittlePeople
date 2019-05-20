@@ -35,13 +35,16 @@ public class Statistic : MonoBehaviour
         AverageSize = si / world.peoples.Count;
         AverageAggression = agg / world.peoples.Count;
 
-        text.text = "Generation : " + world.CurrentDay.ToString() +
-            "\nDeath Count : " + world.DeathCount.ToString() +
-            "\nTinyPeople : " + world.peoples.Count.ToString() +
-            "\nFood : " + world.foods.Count.ToString() +
-            "\nAverage Speed : " + AverageSpeed.ToString() + 
-            "\nAverage Sense : " + AverageSense.ToString();
+        text.text =  world.CurrentDay.ToString() + " - Generation\n"
+                     + world.DeathCount.ToString() + " - Death Count \n"
+                     + world.NomCount.ToString() + " - Eat Count  \n"
+                     + world.peoples.Count.ToString() + " - TinyPeople  \n"
+                     + world.foods.Count.ToString() + " - Food  \n"
+                     + AverageSpeed.ToString("0.00") + " - Average Speed  \n"
+                     + AverageSense.ToString("0.00") + " - Average Sense  \n"
+                     + AverageSize.ToString("0.00") + " - Average Size  \n"
+                     + AverageAggression.ToString("0.00") + " - Average Aggression  \n";
 
-        
+
     }
 }
